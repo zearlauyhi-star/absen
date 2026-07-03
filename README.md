@@ -1,5 +1,11 @@
 # Aplikasi Web Sistem Absensi Sekolah Berbasis `QR Code` <br> (+ Dukungan RFID)
 
+<a href="https://trendshift.io/repositories/11254" target="_blank" title="PHP | 24 July 2024">
+  <img src="https://trendshift.io/api/badge/repositories/11254" alt="ikhsan3adi%2Fabsensi-sekolah-qr-code | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/>
+</a>
+
+<br />
+
 <a href="https://github.com/ikhsan3adi/absensi-sekolah-qr-code/actions/workflows/ci.yml">
     <img src="https://img.shields.io/github/actions/workflow/status/ikhsan3adi/absensi-sekolah-qr-code/ci.yml?branch=master&style=for-the-badge&label=Continuous%20Integration&labelColor=%239f39b5&logo=github" alt="Continuous Integration">
 </a>
@@ -37,6 +43,7 @@ Aplikasi Web Sistem Absensi Sekolah adalah sebuah proyek yang bertujuan untuk me
   - Generate QR code untuk siswa di kelasnya
   - Generate laporan kehadiran khusus untuk kelas yang diampu
 - **QR Code generator & downloader.** Petugas yang sudah login akan men-generate dan/atau mendownload qr code setiap siswa/guru. Setiap siswa akan diberikan QR code unik yang terkait dengan identitas siswa. QR code ini akan digunakan saat proses absensi.
+- **Cetak QR Code.** Petugas dapat mencetak QR code siswa/guru dalam bentuk kartu dengan layout grid 4 kolom. Pencetakan dapat dilakukan per kelas, per guru, atau per individu (satu per satu).
 - **Ubah data absen siswa/guru.** Petugas dapat mengubah data absensi setiap siswa/guru. Misalnya mengubah data kehadiran dari `tanpa keterangan` menjadi `sakit` atau `izin`.
 - **Tambah, Ubah, Hapus(CRUD) data siswa/guru.**
 - **Tambah, Ubah, Hapus(CRUD) data kelas.**
@@ -48,6 +55,15 @@ Aplikasi Web Sistem Absensi Sekolah adalah sebuah proyek yang bertujuan untuk me
   - Import data kelas
   - Import data jurusan
 - **Backup & Restore.** Backup dan restore database serta file foto/QR code.
+- **Pengajuan Izin/Sakit Digital.** Siswa/guru dapat mengajukan izin ketidakhadiran secara mandiri melalui halaman publik (`/izin`). Pengajuan akan direview oleh admin/wali kelas dan jika disetujui, sistem otomatis mengisi presensi siswa/guru dengan status Sakit/Izin sesuai rentang tanggal.
+- **Cek Kehadiran Mandiri.** Portal publik (`/cek-kehadiran`) untuk mengecek riwayat kehadiran siswa tanpa perlu login.
+- **Sistem Poin Keterlambatan.** Sistem otomatis menghitung menit keterlambatan berdasarkan batas jam masuk dan mengakumulasikan poin pelanggaran ke profil siswa. Menampilkan top 5 siswa terlambat di dashboard.
+- **Manajemen Hari Libur.** Admin dapat menandai hari libur (tanggal tunggal atau rentang). Fitur auto-generator untuk menandai seluruh weekend dalam satu bulan. Sistem scanner menolak presensi pada tanggal libur.
+- **Pengaturan Hari Kerja.** Admin dapat mengkonfigurasi hari kerja sekolah (Senin-Sabtu) melalui menu Pengaturan. Sistem secara otomatis menandai hari di luar hari kerja sebagai libur dan menolak presensi pada hari tersebut.
+- **Pembedaan Status "Belum Scan" vs "Alfa".** Sistem membedakan siswa yang belum datang (Belum Scan) dengan yang bolos (Alfa). Status Alfa baru diberikan setelah melewati batas jam pulang.
+- **Peringatan Ketidakhadiran Beruntun.** Dashboard menampilkan siswa yang tidak hadir 3+ hari berturut-turut tanpa keterangan untuk deteksi dini.
+- **Live Monitoring.** Dashboard admin dan wali kelas menampilkan data real-time dengan polling periodik.
+- **Audit Log.** Sistem mencatat semua aktivitas CRUD (siapa, apa, kapan, nilai lama dan baru) untuk keperluan audit dan troubleshooting.
 
 > [!NOTE]
 >
@@ -55,16 +71,20 @@ Aplikasi Web Sistem Absensi Sekolah adalah sebuah proyek yang bertujuan untuk me
 >
 > - [CodeIgniter 4](https://github.com/codeigniter4/CodeIgniter4)
 > - [Material Dashboard Bootstrap 4](https://www.creative-tim.com/product/material-dashboard-bs4)
-> - [Myth Auth Library](https://github.com/lonnieezell/myth-auth)
+> - [CodeIgniter Shield](https://github.com/codeigniter4/shield)
 > - [Endroid QR Code Generator](https://github.com/endroid/qr-code)
 > - [ZXing JS QR Code Scanner](https://github.com/zxing-js/library)
 > - [Chart.js](https://www.chartjs.org/)
+> - [SweetAlert](https://sweetalert2.github.io/)
+> - [DataTables](https://datatables.net/)
 >
 > ---
 >
 > - [Fonnte](https://fonnte.com/) - WhatsApp API untuk mengirim pesan notifikasi
 
 ## Pratinjau
+
+> Tampilan aktual bisa saja telah mengalami perubahan
 
 ### Sistem Presensi
 
@@ -92,11 +112,7 @@ Aplikasi Web Sistem Absensi Sekolah adalah sebuah proyek yang bertujuan untuk me
 | :----------------------------------------------------------------------------------: | :--------------------------------------------------------------------------: |
 | Dashboard khusus untuk guru wali kelas dengan statistik kehadiran siswa di kelasnya. | Wali kelas dapat melihat dan mengelola kehadiran siswa di kelas yang diampu. |
 
----
-
-## Skema Database Inti
-
-<img src="./screenshots/core-absensi-db-schema.svg" alt="Skema Database">
+> Dan masih banyak fitur lainnya...
 
 ---
 
@@ -177,7 +193,12 @@ php spark migrate --all
 - `tb_siswa` - Data siswa
 - `tb_presensi_guru` - Presensi guru
 - `tb_presensi_siswa` - Presensi siswa
-- `users` - Akun pengguna (ditambah kolom `is_superadmin`, `id_guru`)
+- `tb_perizinan` - Pengajuan izin/sakit digital
+- `tb_hari_libur` - Manajemen hari libur
+- `audit_logs` - Log aktivitas sistem
+- `users` - Akun pengguna
+- `auth_identities` - Identitas autentikasi (email, password hash)
+- `auth_groups_users` - Groups pengguna (role)
 - `general_settings` - Pengaturan aplikasi
 
 #### 6. Jalankan Seeder
@@ -231,33 +252,29 @@ Email: adminsuper@gmail.com
 - **Untuk RFID**: Hubungkan RFID reader USB ke komputer
 - **Untuk notifikasi WhatsApp**: Lihat bagian [Konfigurasi](#konfigurasi) di bawah
 
+**Akses Publik (Tanpa Login):**
+
+Halaman berikut dapat diakses tanpa autentikasi:
+
+- `/izin` - Form pengajuan izin/sakit untuk siswa
+- `/cek-kehadiran` - Portal cek kehadiran siswa
+
 > **Untuk panduan lengkap tentang migration dan seeder**, lihat [MIGRATION_GUIDE.md](./MIGRATION_GUIDE.md)
 
-### Daftar Roles
+### Daftar Groups & Permissions
 
-<details>
-<summary>Klik untuk melihat daftar roles</summary>
+Role pengguna dikelola menggunakan **CodeIgniter Shield groups**. Tiap user bisa memiliki lebih dari satu group.
 
-- **Super Admin**
-  - Admin utama dengan akses penuh
+| Group | Title | Hak Akses |
+|-------|-------|-----------|
+| `superadmin` | Super Admin | Akses penuh semua fitur |
+| `admin` | Staf Petugas | Kelola absensi, generate QR & laporan |
+| `kepsek` | Kepala Sekolah | Melihat laporan absensi |
+| `scanner` | Scanner | Hanya scan QR Code |
+| `guru` | Guru / Wali Kelas | Kelola presensi siswanya, review pengajuan izin |
 
-- **Staf Petugas**
-  - Admin
-  - Dapat mengakses fitur absensi / manajemen kehadiran
-  - Dapat mengakses fitur generate laporan
-  - Dapat mengakses fitur generate QR
-
-- **Kepsek**
-  - Kepala Sekolah dengan akses terbatas*
-  - Dapat mengakses fitur generate laporan
-
-- **Scanner**
-  - Petugas scanner QR Code
-  - Hanya memiliki akses ke halaman scanner QR Code*
-
-\* Akses dapat berubah jika dihubungkan ke data guru / di-assign sebagai wali kelas
-
-</details>
+User dengan group `guru` secara otomatis mendapatkan akses ke dashboard wali kelas.
+Untuk menjadi wali kelas, guru harus ditugaskan ke kelas melalui fitur "Edit Kelas" di menu admin.
 
 ### Cara Menggunakan Akun Wali Kelas
 
@@ -304,8 +321,10 @@ Pastikan data berikut sudah tersedia:
 
 Setelah login sebagai wali kelas, Anda dapat:
 
-- **Melihat Statistik Kehadiran**: Grafik dan data kehadiran siswa di kelas yang diampu
+- **Melihat Statistik Kehadiran**: Grafik dan data kehadiran siswa di kelas yang diampu, termasuk data real-time
 - **Mengelola Kehadiran Siswa**: Lihat detail kehadiran setiap siswa per tanggal
+- **Review Pengajuan Izin**: Menyetujui atau menolak pengajuan izin/sakit dari siswa di kelas yang diampu melalui menu **Pengajuan Izin**
+- **Peringatan Ketidakhadiran**: Melihat siswa yang tidak hadir 3+ hari berturut-turut tanpa keterangan
 - **Generate QR Code**: Download QR Code untuk siswa di kelas yang diampu
 - **Generate Laporan**: Buat laporan kehadiran khusus untuk kelas yang diampu dalam format PDF
 
@@ -320,7 +339,7 @@ Setelah login sebagai wali kelas, Anda dapat:
 
 Aplikasi mendukung import data secara massal menggunakan file CSV:
 
-- **Import Data Siswa** - Buka menu Data Siswa > Import CSV. Download template [csv_guru_template.csv](./public/assets/file/csv_siswa_template.csv) dan upload setelah diisi. Contoh [csv_siswa_example.csv](./public/assets/file/csv_siswa_example.csv)
+- **Import Data Siswa** - Buka menu Data Siswa > Import CSV. Download template [csv_siswa_template.csv](./public/assets/file/csv_siswa_template.csv) dan upload setelah diisi. Contoh [csv_siswa_example.csv](./public/assets/file/csv_siswa_example.csv)
   > Pastikan id kelas cocok dengan data kelas yang ada di database
 
 - **Import Data Guru** - Buka menu Data Guru > Import CSV. Download template [csv_guru_template.csv](./public/assets/file/csv_guru_template.csv) dan upload setelah diisi.
@@ -331,6 +350,8 @@ Aplikasi mendukung import data secara massal menggunakan file CSV:
   > ...,Laki-laki,...     # contoh nilai valid
   > ...,Perempuan,...     # pastikan sama persis
   > ```
+  >
+  > Sistem otomatis menormalisasi variasi input jenis kelamin. Nilai seperti `L`, `P`, `laki-laki`, `laki`, `perempuan`, `cewe` akan dikenali dan dikonversi ke nilai database yang benar.
 
 - **Import Data Jurusan dan Kelas** - Buka menu Kelas & Jurusan > Jurusan > Import (Jurusan/Kelas). Download template [csv_jurusan_template.csv](./public/assets/file/csv_jurusan_template.csv) atau [csv_kelas_template.csv](./public/assets/file/csv_kelas_template.csv) dan upload setelah diisi.
   > Penting untuk memastikan kolom jurusan pada csv kelas harus **SUDAH ADA** dan **$PERSIS \space SAMA$** dengan yang ada di database jurusan.
@@ -338,6 +359,11 @@ Aplikasi mendukung import data secara massal menggunakan file CSV:
   > Direkomendasikan untuk impor jurusan dahulu lalu impor kelas
 
 **Catatan:** Gunakan encoding UTF-8 dan delimiter koma (,). Sistem akan mengabaikan data duplikat.
+
+**Fitur Validasi Import CSV:**
+- **Cek Duplikat NIS/NIP**: Sistem mendeteksi dan menolak import jika NIS (siswa) atau NIP (guru) sudah terdaftar di database
+- **Validasi Jenis Kelamin**: Sistem mendeteksi dan menolak baris dengan nilai jenis kelamin yang tidak valid
+- **Penanganan BOM**: File CSV dengan BOM (Byte Order Mark) otomatis dibersihkan saat upload
 
 ### Konfigurasi
 
@@ -436,3 +462,4 @@ Kami menerima kontribusi dari komunitas terbuka untuk meningkatkan aplikasi ini.
 - [@kevindoni](https://www.github.com/kevindoni)
 - [@pandigresik](https://github.com/pandigresik)
 - [@hex4coder](https://github.com/hex4coder)
+- [@mdestafadilah](https://github.com/mdestafadilah)
